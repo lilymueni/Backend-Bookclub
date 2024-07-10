@@ -104,9 +104,9 @@ class Discussions(Resource):
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(Logout, '/logout', endpoint='logout')
-api.add_resource(Users, '/users')
-api.add_resource(BookClubs, '/book_clubs')
-api.add_resource(Discussions, '/discussions')
+api.add_resource(Users, '/users', endpoint='users')
+api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
+api.add_resource(Discussions, '/discussions', endpoint='discussions')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
