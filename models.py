@@ -78,20 +78,22 @@ class Membership(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f'Membership with User {self.user_id} in BookClub {self.book_club_id} as {self.role} is created successfully'
-
-# Discussion Model
-class Discussion(db.Model, SerializerMixin):
-    __tablename__ = 'discussions'
+    
+# Comment Model
+class Comment(db.Model, SerializerMixin):
+    __tablename__ = 'comments'  # Table names should generally be in lowercase
 
     # Define columns
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
-    content = db.Column(Text, nullable=False)
-    created_at = db.Column(DateTime, nullable=False, default=datetime.utcnow)  
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  
     
     # Relationships
-    book_club_id = db.Column(db.Integer, ForeignKey('book_clubs.id'), nullable=False)
-    book_club = db.relationship('BookClub', backref=db.backref('discussions', cascade='all, delete-orphan'))
+    book_club_id = db.Column(db.Integer, db.ForeignKey('book_clubs.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    book_club = db.relationship('BookClub', backref=db.backref('comments', cascade='all, delete-orphan'))
+    user = db.relationship('User', backref=db.backref('comments', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        return f'Discussion {self.title} in BookClub {self.book_club_id} created at {self.created_at}'
+        return f'Comment {self.title} by User {self.user_id} in BookClub {self.book_club_id} created at {self.created_at}'

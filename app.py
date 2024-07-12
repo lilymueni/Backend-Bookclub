@@ -7,7 +7,7 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models import db, User, BookClub, Membership, Discussion
+from models import db, User, BookClub, Membership, Comment
 
 app = Flask(__name__)
 CORS(app)
@@ -105,15 +105,15 @@ class BookClubs(Resource):
         db.session.commit()
         return jsonify(new_book_club.to_dict()), 201
 
-# CRUD for Discussions
-class Discussions(Resource):
+# CRUD for Comments
+class Comments(Resource):
     def get(self):
-        discussions = Discussion.query.all()
-        return jsonify([discussion.to_dict() for discussion in discussions])
+        Comments = Comment.query.all()
+        return jsonify([Comment.to_dict() for discussion in Comments])
 
     def post(self):
         data = request.get_json()
-        new_discussion = Discussion(
+        new_discussion = Comment(
             content=data['content'],
             user_id=session.get('user_id'),
             book_club_id=data['book_club_id']
@@ -129,7 +129,7 @@ api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Users, '/users', endpoint='users')
 api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
-api.add_resource(Discussions, '/discussions', endpoint='discussions')
+api.add_resource(Comments, '/Comments', endpoint='discussions')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
