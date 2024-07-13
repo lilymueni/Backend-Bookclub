@@ -1,30 +1,46 @@
 from app import app, db
-from models import User, BookClub, Membership
+from models import User, BookClub, Membership, Comment
 from datetime import datetime
 
-with app.app_context():
-    # Drop existing tables
-    db.drop_all()
-    # Create tables
-    db.create_all()
+# Function to seed the database
+def seed_database():
+    with app.app_context():
+        # Drop existing tables
+        db.drop_all()
+        # Create tables
+        db.create_all()
 
-    # Clear session
-    db.session.remove()
+        # Clear session
+        db.session.remove()
 
-    # Create some users 
-    user1 = User(username='Smith', email='smith@gmail.com')
-    user2 = User(username='Johnson', email='johnson@gmail.com')
+        # Create users
+        user1 = User(username='alice', email='alice@example.com')
+        user1.password_hash = "user1"
+        user2 = User(username='bob', email='bob@example.com')
+        user2.password_hash = "user2"
+        user3 = User(username='jean', email='jean@example.com')
+        user3.password_hash = "user3"
+        
 
-    # Add users to the session and commit to get their IDs
-    db.session.add(user1)
-    db.session.add(user2)
-    db.session.commit()
+        # Create book clubs
+        book_club1 = BookClub(name='Python Enthusiasts', description='A club for Python lovers', admin=user1)
+        book_club2 = BookClub(name='Book Readers Club', description='Read and discuss books', admin=user2)
 
-    # Create some book clubs with correct parameters
-    bookclub1 = BookClub(name='Book Club 1', description='A book club for discussing fiction books.', cover_image='cover1.jpg', admin_id=user1.id)
-    bookclub2 = BookClub(name='Book Club 2', description='A book club for discussing non-fiction books.', cover_image='cover2.jpg', admin_id=user2.id)
+        # Create memberships
+        membership1 = Membership(user=user1, book_club=book_club1, role='admin')
+        membership2 = Membership(user=user2, book_club=book_club2, role='admin')
+        membership3 = Membership(user=user3, book_club=book_club2, role='member')
 
-    # Add book clubs to the session and commit
-    db.session.add(bookclub1)
-    db.session.add(bookclub2)
-    db.session.commit()
+        # Create comments
+        comment1 = Comment(title='Great book!', content='I really enjoyed reading this.', user=user1, book_club=book_club1)
+        comment2 = Comment(title='Interesting discussion', content='Looking forward to the next meeting.', user=user2, book_club=book_club2)
+
+        # Add records to the session
+        db.session.add_all([user1, user2, user3, book_club1, book_club2, membership1, membership2, membership3, comment1, comment2])
+        db.session.commit()
+
+        print("Database seeded successfully!")
+
+# Run the seeding function
+if __name__ == '__main__':
+    seed_database()
