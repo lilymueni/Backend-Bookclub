@@ -8,6 +8,10 @@ from datetime import timedelta
 from werkzeug.exceptions import NotFound
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
+from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from models import db, User, BookClub, Membership, Comment
 
 app = Flask(__name__)
 CORS(app)
@@ -22,16 +26,16 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 api = Api(app)
 
-# Import your models after initializing db to avoid circular imports
+
 from models import User, BookClub, Membership, Comment
 
-@app.route('/example')
-def example_route():
-    try:
-        result = 1 / 0  # Example division by zero error
-        return jsonify(result=result), 200
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+# @app.route('/example')
+# def example_route():
+#     try:
+#         result = 1 / 0  
+#         return jsonify(result=result), 200
+#     except Exception as e:
+#         return jsonify(error=str(e)), 500
 
 @app.errorhandler(NotFound)
 def handle_not_found(e):
@@ -118,6 +122,26 @@ class CheckSession(Resource):
             return jsonify(user.to_dict()), 200
         return jsonify({"error": "User not found"}), 404
 
+    def get(self):
+        
+        user_id = session['user_id']
+        if user_id:
+            user = User.query.filter(User.id == user_id).first()
+            return user.to_dict(), 200
+        
+        return {}, 401
+
+#User Login
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
+        user = User.query.filter_by(username=data['username']).first()
+        if user and check_password_hash(user.password_hash, data['password']):
+            session['user_id'] = user.id
+            return jsonify(user.to_dict()), 200
+        return {"error": "invalid username or password"}, 401
+
+# User Logout
 class Logout(Resource):
     def post(self):
         session.pop('user_id', None)
@@ -138,13 +162,33 @@ class BookClubs(Resource):
         )
         db.session.add(new_club)
         db.session.commit()
-        return jsonify(new_club.to_dict()), 201
+        return jsonify(new_book_club.to_dict()), 201
 
-api.add_resource(Login, '/login')
-api.add_resource(Register, '/sign_up')
-api.add_resource(CheckSession, '/check_session')
-api.add_resource(Logout, '/logout')
-api.add_resource(BookClubs, '/book_clubs')
+# CRUD for Comments
+class Comments(Resource):
+    def get(self):
+        Comments = Comment.query.all()
+        return jsonify([discussion.to_dict() for discussion in Comments])
+
+    def post(self):
+        data = request.get_json()
+        new_comment = Comment(
+            content=data['content'],
+            user_id=session.get('user_id'),
+            book_club_id=data['book_club_id']
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return jsonify(new_comment.to_dict()), 201
+
+# Resource routing
+#api.add_resource(Test, '/test', endpoint='test')
+#pi.add_resource(Signup, '/signup', endpoint='signup')
+api.add_resource(Login, '/login', endpoint='login')
+api.add_resource(Logout, '/logout', endpoint='logout')
+#api.add_resource(Users, '/users', endpoint='users')
+api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
+api.add_resource(Comments, '/comments', endpoint='comments')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
