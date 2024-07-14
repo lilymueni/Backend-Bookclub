@@ -56,8 +56,13 @@ class BookClub(db.Model, SerializerMixin):
     # Association Proxy
     members = association_proxy('memberships', 'user')
 
+    # Define a method to return members count
+    @property
+    def members_count(self):
+        return len(self.members)
+
     # Serialization rules
-    serialize_only = ("id", "name", "description", "cover_image")
+    serialize_only = ("id", "name", "description", "cover_image", "members_count", "genre")
     serialize_rules = ("-memberships", "-members", "-comments")
 
     def repr(self):
