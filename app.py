@@ -110,11 +110,37 @@ class BookClubs(Resource):
             name=data['name'],
             description=data.get('description'),
             cover_image=data.get('cover_image'),
-            admin_id=session.get('user_id')
-        )
+            )
         db.session.add(new_book_club)
         db.session.commit()
         return jsonify(new_book_club.to_dict()), 201
+
+
+#get a book club by id
+class BookClubById(Resource):
+    def get(self, id):
+        bookClub = BookClub.query.filter_by(id=id).first().to_dict()
+        return make_response(jsonify(bookClub), 200)
+    #update a bookclub
+    def patch(self, id):
+        data = request.get_json()
+
+        bookclub = BookClub.query.filter_by(id=id).first()
+
+        for attr in data:
+            setattr(bookclub, attr, data[attr])
+
+        db.session.add(bookclub)
+        db.session.commit()
+
+        return make_response(bookclub.to_dict(), 200)
+
+    def delete(self, id):
+        bookclub = BookClub.query.filter_by(id=id).first()
+        db.session.delete(bookclub)
+        db.session.commit()
+
+        return make_response('', 204)
 
 class Comments(Resource):
     def get(self):
@@ -140,6 +166,8 @@ api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Users, '/users', endpoint='users')
 api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
+api.add_resource(BookClubById, '/book_clubs/<int:id>')
+
 api.add_resource(Comments, '/comments', endpoint='comments')
 
 if name == 'main':

@@ -47,6 +47,7 @@ class BookClub(db.Model, SerializerMixin):
     name = db.Column(String(100), nullable=False)
     description = db.Column(Text, nullable=True)
     cover_image = db.Column(String(250), nullable=True)
+    genre = db.Column(Text, nullable=True)
 
     
     memberships = db.relationship('Membership', back_populates='book_club')
