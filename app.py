@@ -167,8 +167,8 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Users, '/users', endpoint='users')
 api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
 api.add_resource(BookClubById, '/book_clubs/<int:id>')
+api.add_resource(Comments, '/book_clubs/<int:id>/comments')
 
-api.add_resource(Comments, '/comments', endpoint='comments')
 
 if name == 'main':
     app.run(port=5555, debug=True)

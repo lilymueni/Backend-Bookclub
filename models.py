@@ -101,6 +101,8 @@ class Comment(db.Model, SerializerMixin):
 
     """ book_club = db.relationship('BookClub', backref=db.backref('comments', cascade='all, delete-orphan')) """
     book_club = db.relationship('BookClub', back_populates='comments')
+    user = db.relationship('User', back_populates='comments')
+
 
     """ # Relationships
     book_club = db.relationship('BookClub', backref=db.backref('comments', cascade='all, delete-orphan'))
