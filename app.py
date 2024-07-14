@@ -5,7 +5,7 @@
 # export DATABASE_URI=postgresql://backend_2k0b_user:oQ9vyn6SwVXw9RVlfqgEChEcdCurwbIP@dpg-cq9purdds78s739h7lvg-a.oregon-postgres.render.com/bookclub_app_db
 
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from flask import Flask, request, make_response, jsonify, session
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
@@ -15,7 +15,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, User, BookClub, Membership, Comment
 
-load_dotenv()  # Load environment variables from .env file
+#load_dotenv()  # Load environment variables from .env file
 name = "Backend-Bookclub"
 app = Flask(name)
 CORS(app)
@@ -43,11 +43,11 @@ db.init_app(app)
 api = Api(app)
 
 # Before any request, to determine the page to render
-@app.before_request
+""" @app.before_request
 def check_if_logged_in():
     open_access_list = ['signup', 'login', 'check_session']
     if request.endpoint not in open_access_list and not session.get('user_id'):
-        return {'error': '401 Unauthorized'}, 401
+        return {'error': '401 Unauthorized'}, 401 """
 
 # Define resources and routes
 class CheckSession(Resource):
