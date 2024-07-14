@@ -48,13 +48,7 @@ class BookClub(db.Model, SerializerMixin):
     description = db.Column(Text, nullable=True)
     cover_image = db.Column(String(250), nullable=True)
 
-    #no admin
-    #admin_id = db.Column(Integer, ForeignKey('users.id'), nullable=False)
     
-    # Relationships
-
-    #no admin
-    #admin = db.relationship('User', back_populates='book_clubs')
     memberships = db.relationship('Membership', back_populates='book_club')
     comments = db.relationship('Comment', back_populates='book_club')
     
@@ -62,8 +56,8 @@ class BookClub(db.Model, SerializerMixin):
     members = association_proxy('memberships', 'user')
 
     # Serialization rules
-    serialize_only = ("id", "name", "description", "cover_image", "admin_id")
-    serialize_rules = ("-admin", "-memberships", "-members", "-comments")
+    serialize_only = ("id", "name", "description", "cover_image")
+    serialize_rules = ("-memberships", "-members", "-comments")
 
     def repr(self):
         return f'BookClub {self.name} is created successfully'
