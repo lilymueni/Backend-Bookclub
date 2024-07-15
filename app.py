@@ -1,26 +1,26 @@
-#!/usr/bin/env python3
-
-# modified external database url  = postgresql://backend_2k0b_user:oQ9vyn6SwVXw9RVlfqgEChEcdCurwbIP@dpg-cq9purdds78s739h7lvg-a.oregon-postgres.render.com/bookclub_app_db
-
-# export DATABASE_URI=postgresql://backend_2k0b_user:oQ9vyn6SwVXw9RVlfqgEChEcdCurwbIP@dpg-cq9purdds78s739h7lvg-a.oregon-postgres.render.com/bookclub_app_db
-
 import os
-#from dotenv import load_dotenv
 from flask import Flask, request, make_response, jsonify, session
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from datetime import datetime
 from models import db, User, BookClub, Membership, Comment
 
-#load_dotenv()  # Load environment variables from .env file
-name = "Backend-Bookclub"
-app = Flask(name)
-CORS(app)
+##----------------------------------Start Config-----------------------------------
 
-os.environ["DB_EXTERNAL_URL"] = "postgresql://backend_2k0b_user:oQ9vyn6SwVXw9RVlfqgEChEcdCurwbIP@dpg-cq9purdds78s739h7lvg-a.oregon-postgres.render.com/bookclub_app_db"
+# Initialize Flask app
+app = Flask(__name__)
+
+# Load appropriate configuration based on FLASK_ENV
+if os.getenv('FLASK_ENV') == 'production':
+    app.config.from_object('config.ProductionConfig')
+elif os.getenv('FLASK_ENV') == 'testing':
+    app.config.from_object('config.TestingConfig')
+else:
+    app.config.from_object('config.DevelopmentConfig')
+
 # Configure SQLAlchemy database URI based on environment variables
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -29,25 +29,26 @@ if os.getenv('FLASK_ENV') == 'production':
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DB_INTERNAL_URL")
 else:
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DB_EXTERNAL_URL")
-    
-
-# Print the SQLALCHEMY_DATABASE_URI to verify it's set correctly
-print("SQLALCHEMY_DATABASE_URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
 # Set the Flask app secret key from environment variable
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-migrate = Migrate(app, db)
+# Initialize SQLAlchemy with the Flask app
 db.init_app(app)
 
-api = Api(app)
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
-# Before any request, to determine the page to render
-""" @app.before_request
-def check_if_logged_in():
-    open_access_list = ['signup', 'login', 'check_session']
-    if request.endpoint not in open_access_list and not session.get('user_id'):
-        return {'error': '401 Unauthorized'}, 401 """
+# Create the app context
+with app.app_context():
+    # Create the database tables if they don't exist
+    db.create_all()
+
+# Set up Flask-Restful API
+api = Api(app)
+CORS(app)
+
+###-------------------------------------------------end of config------------------------------------##
 
 # Define resources and routes
 class CheckSession(Resource):
@@ -110,36 +111,31 @@ class BookClubs(Resource):
             name=data['name'],
             description=data.get('description'),
             cover_image=data.get('cover_image'),
-            )
+            genre=data.get('genre')
+        )
         db.session.add(new_book_club)
         db.session.commit()
         return jsonify(new_book_club.to_dict()), 201
 
-
-#get a book club by id
 class BookClubById(Resource):
     def get(self, id):
         bookClub = BookClub.query.filter_by(id=id).first().to_dict()
         return make_response(jsonify(bookClub), 200)
-    #update a bookclub
+
     def patch(self, id):
         data = request.get_json()
-
         bookclub = BookClub.query.filter_by(id=id).first()
 
-        for attr in data:
-            setattr(bookclub, attr, data[attr])
+        for attr, value in data.items():
+            setattr(bookclub, attr, value)
 
-        db.session.add(bookclub)
         db.session.commit()
-
         return make_response(bookclub.to_dict(), 200)
 
     def delete(self, id):
         bookclub = BookClub.query.filter_by(id=id).first()
         db.session.delete(bookclub)
         db.session.commit()
-
         return make_response('', 204)
 
 class Comments(Resource):
@@ -147,17 +143,16 @@ class Comments(Resource):
         comments = Comment.query.all()
         return jsonify([comment.to_dict() for comment in comments])
 
-
     def post(self):
-            data = request.get_json()
-            new_comment = Comment(
-                content=data['content'],
-                user_id=session.get('user_id'),
-                book_club_id=data['book_club_id']
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-            return jsonify(new_comment.to_dict()), 201
+        data = request.get_json()
+        new_comment = Comment(
+            content=data['content'],
+            user_id=session.get('user_id'),
+            book_club_id=data['book_club_id']
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return jsonify(new_comment.to_dict()), 201
 
 # Resource routing
 api.add_resource(Test, '/test', endpoint='test')
@@ -167,8 +162,7 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(Users, '/users', endpoint='users')
 api.add_resource(BookClubs, '/book_clubs', endpoint='book_clubs')
 api.add_resource(BookClubById, '/book_clubs/<int:id>')
-api.add_resource(Comments, '/book_clubs/<int:id>/comments')
+api.add_resource(Comments, '/comments')
 
-
-if name == 'main':
+if __name__ == "__main__":
     app.run(port=5555, debug=True)
