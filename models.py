@@ -3,6 +3,8 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import MetaData, Column, Integer, String, Text, ForeignKey, DateTime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.hybrid import hybrid_property
+from config import db, bcrypt
 
 # Metadata with naming convention
 metadata = MetaData(
@@ -18,10 +20,31 @@ db = SQLAlchemy(metadata=metadata)
 class User(db.Model, SerializerMixin):
     tablename = 'users'
 
+    # Serialization rules
+    serialize_only = ("id", "username", "email")
+    serialize_rules = ("-book_clubs", "-memberships", "-comments", '-_password_hash')
+
     # Define columns
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(String(80), nullable=False, unique=True)
     email = db.Column(String(120), nullable=False, unique=True)
+    _password_hash = db.Column(db.String)
+
+
+    @hybrid_property
+    def password_hash(self):
+        raise AttributeError('Password hashes may not be viewed.')
+
+    @password_hash.setter
+    def password_hash(self, password):
+        password_hash = bcrypt.generate_password_hash(
+            password.encode('utf-8'))
+        self._password_hash = password_hash.decode('utf-8')
+
+    def authenticate(self, password):
+        return bcrypt.check_password_hash(
+            self._password_hash, password.encode('utf-8'))
+      
     
     # Relationships    
     
@@ -31,10 +54,7 @@ class User(db.Model, SerializerMixin):
     # Association Proxy
     book_clubs_joined = association_proxy('memberships', 'book_club')
     
-    # Serialization rules
-    serialize_only = ("id", "username", "email")
-    serialize_rules = ("-book_clubs", "-memberships", "-comments")
-
+    
     def repr(self):
         return f'User {self.username} is created successfully'
     

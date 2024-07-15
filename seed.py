@@ -17,19 +17,19 @@ def seed_database():
         
 
         # Clear session
-        """ db.session.remove() """
+        #db.session.remove()
 
 
         # Create users
         
         user1 = User(username='alice', email='alice@example.com')
-        user1.password_hash = "user1"
+        user1._password_hash = "user1"
         user2 = User(username='bob', email='bob@example.com')
-        user2.password_hash = "user2"
+        user2._password_hash = "user2"
         user3 = User(username='jean', email='jean@example.com')
-        user3.password_hash = "user3"
+        user3._password_hash = "user3"
         user4 = User(username='Kelly', email='kelly@example.com')
-        user4.password_hash = "1234"
+        user4._password_hash = "1234"
         print("Created users")
 
         

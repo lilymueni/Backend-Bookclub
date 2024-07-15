@@ -15,7 +15,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, User, BookClub, Membership, Comment
 
-#load_dotenv()  # Load environment variables from .env file
+#from config import app, db, api, if having a config file
+
 name = "Backend-Bookclub"
 app = Flask(name)
 CORS(app)
@@ -43,12 +44,12 @@ db.init_app(app)
 api = Api(app)
 
 # Before any request, to determine the page to render
-""" @app.before_request
+@app.before_request
 def check_if_logged_in():
     open_access_list = ['signup', 'login', 'check_session']
     if request.endpoint not in open_access_list and not session.get('user_id'):
-        return {'error': '401 Unauthorized'}, 401 """
-
+        return {'error': '401 Unauthorized'}, 401
+    
 # Define resources and routes
 class CheckSession(Resource):
     def get(self):
@@ -59,22 +60,36 @@ class CheckSession(Resource):
         return {}, 401
 
 class Login(Resource):
-    def post(self):
-        data = request.get_json()
-        user = User.query.filter_by(username=data['username']).first()
-        if user and check_password_hash(user.password_hash, data['password']):
-            session['user_id'] = user.id
-            return jsonify(user.to_dict()), 200
-        return {"error": "invalid username or password"}, 401
+   def post(self):
+
+        request_json = request.get_json()
+
+        username = request_json.get('username')
+        password = request_json.get('password')
+
+        user = User.query.filter(User.username == username).first()
+
+        if user:
+            if user.authenticate(password):
+
+                session['user_id'] = user.id
+                return user.to_dict(), 200
+
+        return {'error': '401 Unauthorized'}, 401
 
 class Signup(Resource):
     def post(self):
         data = request.get_json()
         username = data.get('username')
+        password = data.get('password')
         email = data.get('email')
-        if not all([username, email]):
+        if not all([username, email, password]):
             return {'error': '422 Unprocessable Entity'}, 422
         user = User(username=username, email=email)
+        
+         # the setter will encrypt this
+        user.password_hash = password
+
         try:
             db.session.add(user)
             db.session.commit()
@@ -84,8 +99,8 @@ class Signup(Resource):
             return {'error': '422 Unprocessable Entity'}, 422
 
 class Logout(Resource):
-    def post(self):
-        session.pop('user_id', None)
+    def delete(self):
+        session['user_id'] = None
         return {"message": "Logged out successfully"}, 200
 
 class Test(Resource):
@@ -160,7 +175,7 @@ class Comments(Resource):
             return jsonify(new_comment.to_dict()), 201
 
 # Resource routing
-api.add_resource(Test, '/test', endpoint='test')
+api.add_resource(CheckSession, '/check_session', endpoint='check_session')
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(Logout, '/logout', endpoint='logout')
