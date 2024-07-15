@@ -44,12 +44,12 @@ db.init_app(app)
 api = Api(app)
 
 # Before any request, to determine the page to render
-@app.before_request
+""" @app.before_request
 def check_if_logged_in():
     open_access_list = ['signup', 'login', 'check_session']
     if request.endpoint not in open_access_list and not session.get('user_id'):
         return {'error': '401 Unauthorized'}, 401
-    
+ """    
 # Define resources and routes
 class CheckSession(Resource):
     def get(self):
